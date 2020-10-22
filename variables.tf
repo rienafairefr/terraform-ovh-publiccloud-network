@@ -40,7 +40,7 @@ variable "cidr" {
 }
 
 variable "public_subnets" {
-  type = "list"
+  type = list
 
   description = <<DESC
 Public subnets are meant for every instances that can be
@@ -53,7 +53,7 @@ DESC
 }
 
 variable "private_subnets" {
-  type        = "list"
+  type        = list
   description = "A list of private subnets inside the VPC"
   default     = []
 }
@@ -64,7 +64,7 @@ variable "key_pair" {
 }
 
 variable "ssh_public_keys" {
-  type = "list"
+  type = list
 
   description = "The ssh public keys to be used for nat instances and bastion hosts. Can be used in conjunction with `key_pair`."
 
@@ -77,7 +77,7 @@ variable "nat_instance_flavor_name" {
 }
 
 variable "nat_instance_flavor_names" {
-  type = "map"
+  type = map
 
   description = "A map of flavor names per openstack region that will be used for NAT Gateways."
 
@@ -104,7 +104,7 @@ variable "bastion_instance_flavor_name" {
 }
 
 variable "bastion_instance_flavor_names" {
-  type = "map"
+  type = map
 
   description = "A map of flavor names per openstack region that will be used for Bastion host."
 
@@ -150,7 +150,7 @@ variable "region" {
 }
 
 variable "ovh_pub_nets" {
-  type = "map"
+  type = map
 
   description = "A map of ovh public openstack network names."
 
@@ -173,7 +173,7 @@ variable "default_ovh_pub_net" {
 }
 
 variable "dns_nameservers" {
-  type        = "list"
+  type        = list
   description = "The list of dns servers to be pushed by dhcp"
   default     = ["213.186.33.99", "8.8.8.8"]
 }
