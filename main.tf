@@ -8,9 +8,6 @@
 ## should be attached to. (e.g. NATs, LBs, Bastion hosts, ...)
 ## - the 2nd ip will be reserved for nat gateways (usually .1)
 ## - the allocation pools will start at the 3rd ip (usually .2)
-terraform {
-  required_version = ">= 0.11.0"
-}
 
 locals {
   nb_nats            = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : length(var.private_subnets)) : 0
