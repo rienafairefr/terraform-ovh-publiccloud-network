@@ -64,7 +64,7 @@ resource "openstack_networking_secgroup_rule_v2" "in_udp" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "nat_in_ssh" {
-  count = var.nat_as_bastion ? 1  : 0 
+  count = var.nat_as_bastion ? 1 : 0
 
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -81,7 +81,7 @@ resource "openstack_networking_secgroup_v2" "bastion_sg" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "bastion_in_ssh" {
-  count = var.enable_bastion_host ? 1  : 0 
+  count = var.enable_bastion_host ? 1 : 0
 
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -109,11 +109,11 @@ resource "openstack_networking_subnet_v2" "public_subnets" {
   # routes properly on each VM. see nat's ignition config for an example
   no_gateway = true
 
-  dns_nameservers = [var.dns_nameservers]
+  dns_nameservers = var.dns_nameservers
 
-  allocation_pools {
-    start = cidrhost(var.public_subnets[count.index],2)
-    end   = cidrhost(var.public_subnets[count.index],-2)
+  allocation_pool {
+    start = cidrhost(var.public_subnets[count.index], 2)
+    end   = cidrhost(var.public_subnets[count.index], -2)
   }
 }
 
@@ -133,18 +133,21 @@ resource "openstack_networking_subnet_v2" "nat_private_subnets" {
   # routes properly on each VM. see nat's ignition config for an example
   no_gateway = true
 
-  dns_nameservers = [var.dns_nameservers]
+  dns_nameservers = var.dns_nameservers
 
-  allocation_pools {
+  allocation_pool {
     # dhcp agents will take an ip at the beginning of the allocation pool
-    start = cidrhost(var.private_subnets[count.index],2)
-    end   = cidrhost(var.private_subnets[count.index],-2)
+    start = cidrhost(var.private_subnets[count.index], 2)
+    end   = cidrhost(var.private_subnets[count.index], -2)
   }
+}
 
-  host_routes {
-    destination_cidr = "0.0.0.0/0"
-    next_hop         = element(coalescelist(openstack_networking_port_v2.port_nats.*.fixed_ip.0.ip_address, list("dummy")), count.index)
-  }
+resource "openstack_networking_subnet_route_v2" "host_routes" {
+  count = var.enable_nat_gateway ? length(var.private_subnets) : 0
+
+  subnet_id        = openstack_networking_subnet_v2.nat_private_subnets[count.index].id
+  destination_cidr = "0.0.0.0/0"
+  next_hop         = element(coalescelist(openstack_networking_port_v2.port_nats.*.fixed_ip.0.ip_address, list("dummy")), count.index)
 }
 
 resource "openstack_networking_subnet_v2" "no_nat_private_subnets" {
@@ -163,12 +166,12 @@ resource "openstack_networking_subnet_v2" "no_nat_private_subnets" {
   # routes properly on each VM. see nat's ignition config for an example
   no_gateway = true
 
-  dns_nameservers = [var.dns_nameservers]
+  dns_nameservers = var.dns_nameservers
 
-  allocation_pools {
+  allocation_pool {
     # dhcp agents will take an ip at the beginning of the allocation pool
-    start = cidrhost(var.private_subnets[count.index],2)
-    end   = cidrhost(var.private_subnets[count.index],-2)
+    start = cidrhost(var.private_subnets[count.index], 2)
+    end   = cidrhost(var.private_subnets[count.index], -2)
   }
 }
 
@@ -283,7 +286,7 @@ resource "openstack_compute_instance_v2" "nats" {
   name        = "${var.name}_nat_gw_${count.index}"
   image_name  = "CoreOS Stable"
   flavor_name = var.nat_instance_flavor_name != "" ? var.nat_instance_flavor_name : lookup(var.nat_instance_flavor_names, var.region, var.default_nat_instance_flavor_name)
-  user_data   = element(data.template_file.nat_userdata.*.rendered,count.index)
+  user_data   = element(data.template_file.nat_userdata.*.rendered, count.index)
   key_pair    = var.key_pair
 
   # keep netwokrs in this order so that ext-net is set on eth1
@@ -312,14 +315,14 @@ data "template_file" "private_subnets_ids" {
   count    = length(var.private_subnets)
   template = "$${private_subnet_id}"
 
-  vars {
+  vars = {
     nat_id            = element(coalescelist(openstack_compute_instance_v2.nats.*.id, list("")), count.index)
     private_subnet_id = element(coalescelist(openstack_networking_subnet_v2.nat_private_subnets.*.id, openstack_networking_subnet_v2.no_nat_private_subnets.*.id), count.index)
   }
 }
 
 resource "openstack_networking_port_v2" "public_port_bastion" {
-  count = var.enable_bastion_host ? 1 : 0 
+  count = var.enable_bastion_host ? 1 : 0
 
   name               = "${var.name}_bastion_public_port"
   network_id         = data.openstack_networking_network_v2.ext_net.id
@@ -328,7 +331,7 @@ resource "openstack_networking_port_v2" "public_port_bastion" {
 }
 
 resource "openstack_networking_port_v2" "port_bastion" {
-  count = var.enable_bastion_host ? 1 : 0 
+  count = var.enable_bastion_host ? 1 : 0
 
   name               = "${var.name}_bastion_port"
   network_id         = local.network_id
@@ -389,7 +392,7 @@ CLOUDCONFIG
 }
 
 resource "openstack_compute_instance_v2" "bastion" {
-  count = var.enable_bastion_host ? 1 : 0 
+  count = var.enable_bastion_host ? 1 : 0
 
   name        = "${var.name}_bastion"
   image_name  = "CoreOS Stable"
@@ -400,12 +403,12 @@ resource "openstack_compute_instance_v2" "bastion" {
 
   # keep netwokrs in this order so that ext-net is set on eth1
   network {
-    port = openstack_networking_port_v2.port_bastion.id
+    port = openstack_networking_port_v2.port_bastion[0].id
   }
 
   network {
     access_network = true
-    port           = openstack_networking_port_v2.public_port_bastion.id
+    port           = openstack_networking_port_v2.public_port_bastion[0].id
   }
 
   metadata = var.metadata
