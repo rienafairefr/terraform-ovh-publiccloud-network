@@ -26,15 +26,15 @@ provider "openstack" {
 ## to create all the networks with the same segmentation/vlan ID
 ##################################################################
 resource "ovh_vrack_publiccloud_attachment" "attach" {
-  count      = "${var.attach_vrack}"
-  vrack_id   = "${var.vrack_id}"
-  project_id = "${var.project_id}"
+  count      = var.attach_vrack
+  vrack_id   = var.vrack_id
+  project_id = var.project_id
 }
 
 # make use of the ovh api to set a vlan id (or segmentation id)
 resource "ovh_publiccloud_private_network" "net" {
-  project_id = "${var.project_id}"
-  name       = "${var.network_name}"
+  project_id = var.project_id
+  name       = var.network_name
   regions    = ["GRA3", "SBG3", "DE1"]
   vlan_id    = "110"
 
@@ -46,9 +46,9 @@ module "network_GRA3" {
   #  version = ">= 0.0.10"
   source = "../.."
 
-  network_name       = "${ovh_publiccloud_private_network.net.name}"
+  network_name       = ovh_publiccloud_private_network.net.name
   create_network     = false
-  name               = "${var.network_name}"
+  name               = var.network_name
   cidr               = "10.0.0.0/16"
   region             = "GRA3"
   public_subnets     = ["10.0.0.0/24"]
@@ -71,9 +71,9 @@ module "network_SBG3" {
   #  version = ">= 0.0.10"
   source = "../.."
 
-  network_name       = "${ovh_publiccloud_private_network.net.name}"
+  network_name       = ovh_publiccloud_private_network.net.name
   create_network     = false
-  name               = "${var.network_name}"
+  name               = var.network_name
   cidr               = "10.0.0.0/16"
   region             = "SBG3"
   public_subnets     = ["10.0.10.0/24"]
@@ -97,8 +97,8 @@ module "network_DE1" {
   source = "../.."
 
   create_network     = false
-  network_name       = "${ovh_publiccloud_private_network.net.name}"
-  name               = "${var.network_name}"
+  network_name       = ovh_publiccloud_private_network.net.name
+  name               = var.network_name
   cidr               = "10.0.0.0/16"
   region             = "DE1"
   public_subnets     = ["10.0.20.0/24"]

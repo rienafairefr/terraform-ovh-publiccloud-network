@@ -2,13 +2,13 @@
 ## your OVH Vrack
 provider "openstack" {
   version = "~> 1.2"
-  region  = "${var.region}"
+  region  = var.region
 }
 
 # Import Keypair
 resource "openstack_compute_keypair_v2" "keypair" {
   name       = "example-natbastion-keypair"
-  public_key = "${file("~/.ssh/id_rsa.pub")}"
+  public_key = file("~/.ssh/id_rsa.pub")
 }
 
 module "network" {
@@ -18,13 +18,13 @@ module "network" {
 
   name               = "example-natbastion-network"
   cidr               = "10.1.0.0/16"
-  region             = "${var.region}"
+  region             = var.region
   public_subnets     = ["10.1.0.0/24"]
   private_subnets    = ["10.1.1.0/24", "10.1.2.0/24"]
   enable_nat_gateway = true
   single_nat_gateway = true
   nat_as_bastion     = true
-  key_pair           = "${openstack_compute_keypair_v2.keypair.name}"
+  key_pair           = openstack_compute_keypair_v2.keypair.name
 
   metadata = {
     Terraform   = "true"
@@ -34,11 +34,11 @@ module "network" {
 
 resource "openstack_networking_port_v2" "port_private_instance" {
   name           = "example-natbastion-port-instance"
-  network_id     = "${module.network.network_id}"
+  network_id     = module.network.network_id
   admin_state_up = "true"
 
   fixed_ip {
-    subnet_id = "${module.network.private_subnets[0]}"
+    subnet_id = module.network.private_subnets[0]
   }
 }
 
@@ -46,7 +46,7 @@ resource "openstack_compute_instance_v2" "my_private_instance" {
   name        = "example-natbastion-instance"
   image_name  = "Centos 7"
   flavor_name = "s1-8"
-  key_pair    = "${openstack_compute_keypair_v2.keypair.name}"
+  key_pair    = openstack_compute_keypair_v2.keypair.name
 
   user_data = <<USERDATA
 #cloud-config
@@ -60,6 +60,6 @@ write_files:
 USERDATA
 
   network {
-    port = "${openstack_networking_port_v2.port_private_instance.id}"
+    port = openstack_networking_port_v2.port_private_instance.id
   }
 }

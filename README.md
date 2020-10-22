@@ -33,7 +33,7 @@ module "network" {
   enable_nat_gateway  = true
   enable_bastion_host = true
 
-  ssh_public_keys = ["${openstack_compute_keypair_v2.keypair.public_key}"]
+  ssh_public_keys = [openstack_compute_keypair_v2.keypair.public_key]
 
   metadata = {
     Terraform   = "true"
